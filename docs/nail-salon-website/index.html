@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nail Salon "Идеальный Маникюр" | Запись онлайн</title>
+    <meta name="description" content="Профессиональный маникюрный салон с онлайн-записью. Личные кабинеты для клиентов и мастеров.">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <!-- Шрифты и иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Наши стили -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💅</text></svg>">
+</head>
+<body>
+    <!-- Шапка сайта -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">💅</span>
+                    <span class="logo-text">Идеальный <span class="logo-highlight">маникюр</span></span>
+                </a>
+                
+                <nav class="desktop-nav">
+                    <ul id="mainNav">
+                        <li><a href="#about">О салоне</a></li>
+                        <li><a href="#services">Услуги</a></li>
+                        <li><a href="#masters">Мастера</a></li>
+                        <li><a href="#portfolio">Работы</a></li>
+                        <li><a href="#booking">Запись</a></li>
+                        <li id="authNav">
+                            <!-- Сюда вставится кнопки Войти/Выйти -->
+                        </li>
+                    </ul>
+                </nav>
+                
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <!-- Мобильное меню -->
+            <nav class="mobile-nav" id="mobileNav">
+                <ul>
+                    <li><a href="#about">О салоне</a></li>
+                    <li><a href="#services">Услуги</a></li>
+                    <li><a href="#masters">Мастера</a></li>
+                    <li><a href="#portfolio">Работы</a></li>
+                    <li><a href="#booking">Запись</a></li>
+                    <li id="mobileAuthNav"></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Главный баннер -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Профессиональный маникюр с системой онлайн-записи</h1>
+                <p class="hero-subtitle">Записывайтесь к лучшим мастерам, управляйте визитами, оставляйте отзывы</p>
+                <div class="hero-buttons">
+                    <button onclick="showRegisterModal()" class="btn btn-primary">Начать использовать</button>
+                    <a href="#booking" class="btn btn-secondary">Записаться сейчас</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Основной контент -->
+    <main>
+        <!-- Раздел "О салоне" -->
+        <section id="about" class="section about">
+            <div class="container">
+                <h2 class="section-title">О нашем салоне</h2>
+                <div class="about-content">
+                    <div class="about-text">
+                        <p>Добро пожаловать в салон маникюра "Идеальный маникюр"! Мы работаем с 2015 года и заслужили доверие тысяч клиентов.</p>
+                        <p>Наша уникальная система позволяет:</p>
+                        <ul class="features-list">
+                            <li><i class="fas fa-check-circle"></i> Записываться онлайн 24/7</li>
+                            <li><i class="fas fa-check-circle"></i> Выбирать любимого мастера</li>
+                            <li><i class="fas fa-check-circle"></i> Управлять своими записями</li>
+                            <li><i class="fas fa-check-circle"></i> Оставлять отзывы с фото</li>
+                            <li><i class="fas fa-check-circle"></i> Получать уведомления о записях</li>
+                        </ul>
+                    </div>
+                    <div class="about-image">
+                        <div class="image-placeholder">
+                            <i class="fas fa-spa"></i>
+                            <p>Наш уютный салон</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Раздел "Услуги" -->
+        <section id="services" class="section services">
+            <div class="container">
+                <h2 class="section-title">Наши услуги</h2>
+                <div class="services-grid" id="servicesGrid">
+                    <!-- Услуги загрузятся через JavaScript -->
+                    <div class="loading">Загрузка услуг...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Раздел "Мастера" -->
+        <section id="masters" class="section masters">
+            <div class="container">
+                <h2 class="section-title">Наши мастера</h2>
+                <div class="masters-grid" id="mastersGrid">
+                    <!-- Мастера загрузятся через JavaScript -->
+                    <div class="loading">Загрузка мастеров...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Раздел "Онлайн-запись" -->
+        <section id="booking" class="section booking">
+            <div class="container">
+                <h2 class="section-title">Онлайн-запись</h2>
+                <div class="booking-container" id="bookingContainer">
+                    <div class="booking-message">
+                        <p>Для записи на услугу необходимо <a href="#" onclick="showLoginModal()">войти в систему</a> или <a href="#" onclick="showRegisterModal()">зарегистрироваться</a>.</p>
+                        <p>После регистрации вы сможете:</p>
+                        <ul>
+                            <li>Выбирать мастера и время</li>
+                            <li>Управлять своими записями</li>
+                            <li>Получать напоминания</li>
+                            <li>Оставлять отзывы</li>
+                        </ul>
+                        <button onclick="showRegisterModal()" class="btn btn-primary">Зарегистрироваться и записаться</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Раздел "Портфолио" -->
+        <section id="portfolio" class="section portfolio">
+            <div class="container">
+                <h2 class="section-title">Наши работы</h2>
+                <div class="portfolio-grid" id="portfolioGrid">
+                    <!-- Работы загрузятся через JavaScript -->
+                    <div class="loading">Загрузка работ...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Раздел "Отзывы" -->
+        <section id="reviews" class="section reviews">
+            <div class="container">
+                <h2 class="section-title">Отзывы клиентов</h2>
+                <div class="reviews-slider" id="reviewsSlider">
+                    <!-- Отзывы загрузятся через JavaScript -->
+                    <div class="loading">Загрузка отзывов...</div>
+                </div>
+                <div class="add-review">
+                    <button onclick="showLoginModal()" class="btn btn-review">Оставить отзыв</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <div class="footer-logo">
+                        <span class="logo-icon">💅</span>
+                        <span class="logo-text">Идеальный <span class="logo-highlight">маникюр</span></span>
+                    </div>
+                    <p class="footer-description">Профессиональный маникюрный салон с системой онлайн-записи.</p>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>Контакты</h4>
+                    <ul class="footer-contacts">
+                        <li><i class="fas fa-map-marker-alt"></i> г. Москва, ул. Тверская, д. 10</li>
+                        <li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li>
+                        <li><i class="fas fa-envelope"></i> info@idealnail.ru</li>
+                        <li><i class="fas fa-clock"></i> Пн-Вс: 9:00 - 21:00</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 Салон маникюра "Идеальный маникюр". Все права защищены.</p>
+                <p><a href="#privacy">Политика конфиденциальности</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Модальное окно входа/регистрации -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Вход в систему</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Форма будет загружена динамически -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем скрипты -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- ... мета теги ... -->
+    
+    <!-- Подключаем Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Шрифты и стили -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ... содержимое ... -->
+    
+    <!-- Подключаем скрипты -->
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="database.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

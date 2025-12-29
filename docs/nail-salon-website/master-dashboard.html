@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кабинет мастера | Идеальный маникюр</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1><i class="fas fa-tools"></i> Кабинет мастера</h1>
+                <button onclick="authSystem.logout()" class="btn btn-secondary">Выйти</button>
+            </div>
+            
+            <div class="dashboard-content">
+                <div class="dashboard-sidebar">
+                    <div class="user-info-card">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h3 id="masterName">Загрузка...</h3>
+                        <p class="user-role"><i class="fas fa-award"></i> Мастер</p>
+                        <div class="master-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="todayCount">0</span>
+                                <span class="stat-label">Сегодня</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="ratingValue">5.0</span>
+                                <span class="stat-label">Рейтинг</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <nav class="dashboard-nav">
+                        <a href="#" class="nav-item active" data-tab="schedule">
+                            <i class="fas fa-calendar-alt"></i> Расписание
+                        </a>
+                        <a href="#" class="nav-item" data-tab="appointments">
+                            <i class="fas fa-users"></i> Записи
+                        </a>
+                        <a href="#" class="nav-item" data-tab="portfolio">
+                            <i class="fas fa-images"></i> Портфолио
+                        </a>
+                        <a href="#" class="nav-item" data-tab="reviews">
+                            <i class="fas fa-star"></i> Отзывы
+                        </a>
+                        <a href="#" class="nav-item" data-tab="profile">
+                            <i class="fas fa-user-edit"></i> Профиль
+                        </a>
+                    </nav>
+                </div>
+                
+                <div class="dashboard-main">
+                    <!-- Вкладка "Расписание" -->
+                    <div class="tab-content active" id="scheduleTab">
+                        <div class="tab-header">
+                            <h2>Мое расписание</h2>
+                            <button onclick="updateSchedule()" class="btn btn-primary">Обновить расписание</button>
+                        </div>
+                        <div class="schedule-calendar" id="scheduleCalendar">
+                            <div class="loading">Загрузка расписания...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вкладка "Записи" -->
+                    <div class="tab-content" id="appointmentsTab">
+                        <div class="tab-header">
+                            <h2>Записи клиентов</h2>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-filter="today">Сегодня</button>
+                                <button class="filter-btn" data-filter="tomorrow">Завтра</button>
+                                <button class="filter-btn" data-filter="week">Неделя</button>
+                            </div>
+                        </div>
+                        <div class="appointments-list" id="appointmentsList">
+                            <div class="loading">Загрузка записей...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вкладка "Портфолио" -->
+                    <div class="tab-content" id="portfolioTab">
+                        <div class="tab-header">
+                            <h2>Мое портфолио</h2>
+                            <button onclick="showUploadModal()" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Добавить работу
+                            </button>
+                        </div>
+                        <div class="portfolio-grid" id="masterPortfolio">
+                            <div class="loading">Загрузка работ...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Остальные вкладки -->
+                    <div class="tab-content" id="reviewsTab">
+                        <h2>Отзывы обо мне</h2>
+                        <div id="masterReviewsList"></div>
+                    </div>
+                    
+                    <div class="tab-content" id="profileTab">
+                        <h2>Мой профиль</h2>
+                        <form id="masterProfileForm">
+                            <div class="form-group">
+                                <label>Специализация</label>
+                                <input type="text" id="masterSpecialization" 
+                                       placeholder="Маникюр, педикюр, дизайн...">
+                            </div>
+                            <div class="form-group">
+                                <label>Опыт (лет)</label>
+                                <input type="number" id="masterExperience" min="0" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label>Описание</label>
+                                <textarea id="masterDescription" rows="4"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно загрузки фото -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить работу в портфолио</h3>
+                <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label>Выберите фото</label>
+                        <input type="file" id="photoFile" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Описание</label>
+                        <textarea id="photoDescription" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Загрузить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Проверяем, что пользователь мастер
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const userData = userDoc.data();
+            
+            if (userData.role !== 'master') {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Загружаем данные мастера
+            document.getElementById('masterName').textContent = 
+                `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Мастер';
+            
+            // Заполняем форму профиля
+            document.getElementById('masterSpecialization').value = userData.specialization || '';
+            document.getElementById('masterExperience').value = userData.experience || '';
+            document.getElementById('masterDescription').value = userData.description || '';
+            
+            // Загружаем данные
+            loadMasterSchedule(user.uid);
+            loadTodayAppointments(user.uid);
+            loadMasterPortfolio(user.uid);
+            loadMasterReviews(user.uid);
+            updateStats(user.uid);
+        });
+        
+        // Загрузка расписания
+        async function loadMasterSchedule(masterId) {
+            const calendar = document.getElementById('scheduleCalendar');
+            
+            try {
+                // Создаем календарь на неделю
+                const today = new Date();
+                let html = `
+                    <div class="calendar-header">
+                        <div class="day-header">Пн</div>
+                        <div class="day-header">Вт</div>
+                        <div class="day-header">Ср</div>
+                        <div class="day-header">Чт</div>
+                        <div class="day-header">Пт</div>
+                        <div class="day-header">Сб</div>
+                        <div class="day-header">Вс</div>
+                    </div>
+                    <div class="calendar-body">
+                `;
+                
+                // Время с 9:00 до 21:00
+                for (let hour = 9; hour <= 21; hour++) {
+                    html += `<div class="time-label">${hour}:00</div>`;
+                    
+                    for (let day = 1; day <= 7; day++) {
+                        const slotId = `slot-${day}-${hour}`;
+                        html += `
+                            <div class="time-slot available" id="${slotId}"
+                                 onclick="toggleTimeSlot('${slotId}')">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += '</div>';
+                calendar.innerHTML = html;
+            } catch (error) {
+                console.error('Ошибка загрузки расписания:', error);
+                calendar.innerHTML = '<p>Ошибка загрузки расписания</p>';
+            }
+        }
+        
+        // Переключение временного слота
+        function toggleTimeSlot(slotId) {
+            const slot = document.getElementById(slotId);
+            if (slot.classList.contains('available')) {
+                slot.classList.remove('available');
+                slot.classList.add('unavailable');
+                slot.innerHTML = '<i class="fas fa-times"></i>';
+            } else {
+                slot.classList.remove('unavailable');
+                slot.classList.add('available');
+                slot.innerHTML = '<i class="fas fa-plus"></i>';
+            }
+        }
+        
+        // Загрузка записей на сегодня
+        async function loadTodayAppointments(masterId) {
+            const today = new Date().toISOString().split('T')[0];
+            const list = document.getElementById('appointmentsList');
+            
+            try {
+                const snapshot = await db.collection('bookings')
+                    .where('masterId', '==', masterId)
+                    .where('date', '==', today)
+                    .orderBy('time')
+                    .get();
+                
+                if (snapshot.empty) {
+                    list.innerHTML = '<p>На сегодня записей нет</p>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const booking = doc.data();
+                    html += `
+                        <div class="appointment-card">
+                            <div class="appointment-header">
+                                <h4>${booking.serviceName}</h4>
+                                <span class="appointment-status">${booking.status}</span>
+                            </div>
+                            <div class="appointment-body">
+                                <p><strong>Клиент:</strong> ${booking.clientName}</p>
+                                <p><strong>Телефон:</strong> ${booking.clientPhone}</p>
+                                <p><strong>Время:</strong> ${booking.time}</p>
+                                ${booking.notes ? `<p><strong>Примечание:</strong> ${booking.notes}</p>` : ''}
+                            </div>
+                            <div class="appointment-actions">
+                                <button onclick="completeAppointment('${doc.id}')" 
+                                        class="btn btn-success">Завершено</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                list.innerHTML = html;
+            } catch (error) {
+                console.error('Ошибка загрузки записей:', error);
+                list.innerHTML = '<p>Ошибка загрузки записей</p>';
+            }
+        }
+        
+        // Загрузка портфолио мастера
+        async function loadMasterPortfolio(masterId) {
+            const portfolio = document.getElementById('masterPortfolio');
+            
+            try {
+                const snapshot = await db.collection('portfolio')
+                    .where('masterId', '==', masterId)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const work = doc.data();
+                    html += `
+                        <div class="portfolio-item">
+                            ${work.downloadURL ? 
+                                `<img src="${work.downloadURL}" alt="${work.description}" 
+                                     style="width:100%; height:200px; object-fit:cover;">` :
+                                `<div class="image-placeholder" style="height:200px;">
+                                    <i class="fas fa-image"></i>
+                                    <p>${work.description || 'Работа'}</p>
+                                </div>`
+                            }
+                            <div class="portfolio-overlay">
+                                <p>${work.description || ''}</p>
+                                <button onclick="deletePhoto('${doc.id}')" 
+                                        class="btn-delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Кнопка добавления
+                html += `
+                    <div class="portfolio-item add-photo" onclick="showUploadModal()">
+                        <div class="add-photo-content">
+                            <i class="fas fa-plus"></i>
+                            <p>Добавить работу</p>
+                        </div>
+                    </div>
+                `;
+                
+                portfolio.innerHTML = html;
+            } catch (error) {
+                console.error('Ошибка загрузки портфолио:', error);
+                portfolio.innerHTML = '<p>Ошибка загрузки работ</p>';
+            }
+        }
+        
+        // Загрузка отзывов
+        async function loadMasterReviews(masterId) {
+            const reviewsList = document.getElementById('masterReviewsList');
+            
+            try {
+                const snapshot = await db.collection('reviews')
+                    .where('masterId', '==', masterId)
+                    .where('approved', '==', true)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    reviewsList.innerHTML = '<p>Отзывов пока нет</p>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const review = doc.data();
+                    const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+                    
+                    html += `
+                        <div class="review-card">
+                            <div class="review-header">
+                                <h4>${review.clientName}</h4>
+                                <div class="review-rating">${stars}</div>
+                            </div>
+                            <p>${review.text}</p>
+                        </div>
+                    `;
+                });
+                
+                reviewsList.innerHTML = html;
+            } catch (error) {
+                console.error('Ошибка загрузки отзывов:', error);
+                reviewsList.innerHTML = '<p>Ошибка загрузки отзывов</p>';
+            }
+        }
+        
+        // Обновление статистики
+        async function updateStats(masterId) {
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Считаем записи на сегодня
+            const todaySnapshot = await db.collection('bookings')
+                .where('masterId', '==', masterId)
+                .where('date', '==', today)
+                .get();
+            
+            document.getElementById('todayCount').textContent = todaySnapshot.size;
+            
+            // Считаем средний рейтинг
+            const reviewsSnapshot = await db.collection('reviews')
+                .where('masterId', '==', masterId)
+                .get();
+            
+            let totalRating = 0;
+            reviewsSnapshot.forEach(doc => {
+                totalRating += doc.data().rating;
+            });
+            
+            const avgRating = reviewsSnapshot.size > 0 ? 
+                (totalRating / reviewsSnapshot.size).toFixed(1) : '5.0';
+            document.getElementById('ratingValue').textContent = avgRating;
+        }
+        
+        // Инициализация вкладок
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                const tabName = this.getAttribute('data-tab');
+                document.getElementById(`${tabName}Tab`).classList.add('active');
+            });
+        });
+        
+        // Сохранение профиля мастера
+        document.getElementById('masterProfileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const masterData = {
+                specialization: document.getElementById('masterSpecialization').value,
+                experience: parseInt(document.getElementById('masterExperience').value) || 0,
+                description: document.getElementById('masterDescription').value
+            };
+            
+            try {
+                await db.collection('users').doc(user.uid).update(masterData);
+                alert('Профиль обновлен!');
+            } catch (error) {
+                alert('Ошибка обновления профиля');
+            }
+        });
+        
+        // Загрузка фото
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const file = document.getElementById('photoFile').files[0];
+            const description = document.getElementById('photoDescription').value;
+            
+            if (!file) {
+                alert('Выберите файл');
+                return;
+            }
+            
+            const user = auth.currentUser;
+            const storageRef = storage.ref();
+            const fileRef = storageRef.child(`portfolio/${user.uid}/${Date.now()}_${file.name}`);
+            
+            try {
+                // Загружаем файл
+                await fileRef.put(file);
+                const downloadURL = await fileRef.getDownloadURL();
+                
+                // Сохраняем информацию в Firestore
+                await db.collection('portfolio').add({
+                    masterId: user.uid,
+                    downloadURL: downloadURL,
+                    description: description,
+                    createdAt: new Date().toISOString(),
+                    approved: true
+                });
+                
+                alert('Фото загружено!');
+                closeUploadModal();
+                loadMasterPortfolio(user.uid);
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                alert('Ошибка загрузки фото');
+            }
+        });
+        
+        // Удаление фото
+        async function deletePhoto(photoId) {
+            if (!confirm('Удалить эту работу?')) return;
+            
+            try {
+                await db.collection('portfolio').doc(photoId).delete();
+                alert('Работа удалена');
+                loadMasterPortfolio(auth.currentUser.uid);
+            } catch (error) {
+                alert('Ошибка удаления');
+            }
+        }
+        
+        // Завершение записи
+        async function completeAppointment(bookingId) {
+            try {
+                await db.collection('bookings').doc(bookingId).update({
+                    status: 'completed'
+                });
+                alert('Запись завершена');
+                loadTodayAppointments(auth.currentUser.uid);
+            } catch (error) {
+                alert('Ошибка завершения записи');
+            }
+        }
+        
+        // Модальные окна
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+        
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+            document.getElementById('uploadForm').reset();
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- ... мета теги ... -->
+    
+    <!-- Подключаем Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Шрифты и стили -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ... содержимое ... -->
+    
+    <!-- Подключаем скрипты -->
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="database.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
